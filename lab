@@ -1,0 +1,26 @@
+#!/bin/sh
+# Песочница модулей Foundry. Каждая папка modules/<name> — отдельный модуль lab-<name>,
+# подключённый симлинком в Data/modules.
+#   ./lab new <name>   создать модуль из шаблона и подключить
+#   ./lab link         подключить все (после клона или переустановки Foundry)
+#   ./lab drop <name>  отключить и удалить
+set -e
+cd "$(dirname "$0")"
+DATA="${FOUNDRY_DATA:-$HOME/Library/Application Support/FoundryVTT/Data}/modules"
+
+link() { ln -sfn "$PWD/modules/$1" "$DATA/lab-$1"; echo "linked lab-$1"; }
+
+case "$1" in
+  new)
+    [ -n "$2" ] || { echo "usage: ./lab new <name>"; exit 1; }
+    [ ! -e "modules/$2" ] || { echo "modules/$2 already exists"; exit 1; }
+    cp -R template "modules/$2"
+    sed -i '' "s/__NAME__/$2/g" "modules/$2"/*
+    link "$2" ;;
+  link)
+    for d in modules/*/; do link "$(basename "$d")"; done ;;
+  drop)
+    [ -n "$2" ] || { echo "usage: ./lab drop <name>"; exit 1; }
+    rm -f "$DATA/lab-$2"; rm -rf "modules/$2"; echo "dropped lab-$2" ;;
+  *) sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//' ;;
+esac

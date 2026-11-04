@@ -1,0 +1,10 @@
+{
+  "id": "lab-__NAME__",
+  "title": "Lab: __NAME__",
+  "description": "Experiment from foundry-lab",
+  "version": "0.0.1",
+  "compatibility": { "minimum": "14", "verified": "14" },
+  "esmodules": ["main.js"],
+  "styles": ["style.css"],
+  "flags": { "hotReload": { "extensions": ["js", "css", "hbs", "json"] } }
+}
