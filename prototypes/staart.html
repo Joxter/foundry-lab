@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Staart — roll panel prototype</title>
+<style>
+  :root { --bg:#1d1b19; --panel:#2a2724; --line:#3a3632; --text:#e8e2d6; --dim:#9a9184; --acc:#c9a35b; --good:#7fb069; --bad:#d0605e; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; justify-content:center; align-items:flex-start; gap:16px; padding:24px;
+         background:#111; color:var(--text); font:13px/1.2 system-ui, sans-serif; }
+  .panel { width:410px; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:8px;
+           display:flex; flex-direction:column; gap:8px; }
+  button { font:inherit; color:var(--text); background:var(--bg); border:1px solid var(--line); border-radius:4px;
+           height:24px; padding:0; cursor:pointer; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  button:hover { border-color:var(--acc); }
+
+  /* характеристики и спасы */
+  .abil { display:grid; grid-template-columns:36px repeat(6, 1fr); gap:3px; align-items:center; }
+  .abil .lbl { color:var(--dim); font-size:11px; }
+  .abil button { height:34px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; }
+  .abil button small { color:var(--dim); font-size:10px; }
+
+  /* табы: фиксированная высота, чтобы панель не прыгала */
+  .tabs { display:flex; gap:4px; }
+  .tabs button { flex:1; }
+  .tabs button.on { background:var(--line); border-color:var(--acc); }
+  .tab { height:500px; overflow-y:auto; display:none; }
+  .tab.on { display:block; }
+
+  /* skills: name ▼ [bonus=roll] ▲
+     actions: icon name | ▼ [Attack] ▲ | [Damage|Crit|Sneak] */
+  .row { display:grid; gap:3px; align-items:center; height:26px; }
+  .row.skill  { grid-template-columns:120px 20px 44px 20px; }
+  .row.action { grid-template-columns:24px 1fr 20px 58px 20px 6px 146px; }
+  .head { height:18px; margin-top:8px; color:var(--dim); font-size:11px; text-transform:uppercase; }
+  .head:first-child { margin-top:0; }
+  .icon { width:22px; height:22px; border-radius:3px; background:var(--line); color:var(--dim);
+          display:flex; align-items:center; justify-content:center; font-size:11px; }
+  .row .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-left:4px; }
+  /* урон — одна составная кнопка: [Damage|Crit|Sneak] */
+  .dmgbox { display:flex; }
+  .dmgbox button { border-radius:0; margin-left:-1px; }
+  .dmgbox button:first-child { border-radius:4px 0 0 4px; margin-left:0; }
+  .dmgbox button:last-child { border-radius:0 4px 4px 0; }
+  .dmgbox button:only-child { border-radius:4px; }
+  .dmgbox .dmg { width:62px; }
+  .dmgbox .crit { width:38px; }
+  .dmgbox .sneak { width:47px; }
+  .dmgbox .toggle { background:var(--line); border-color:#4a4540; color:var(--dim); }
+  /* треугольники преимущества/помехи — без фона и рамки */
+  .row button.dis, .row button.adv { background:none; border:none; font-size:12px; }
+  .row button.dis { color:var(--bad); }
+  .row button.adv { color:var(--good); }
+  .row button.dis:hover, .row button.adv:hover { filter:brightness(1.4); }
+  .row button.atk { background:#4a3c22; border-color:#6b5730; color:#f0d9a8; }
+  .row button.dmg { background:#4a2624; border-color:#6e3a36; color:#f2c4bf; }
+  .row button.atk:hover, .row button.dmg:hover { filter:brightness(1.25); }
+  .row button.toggle.on { background:#3d3520; border-color:var(--acc); color:var(--acc); }
+
+  /* лог: фиксированная высота, новые сверху */
+  .log { width:280px; height:300px; overflow:hidden; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:8px;
+         display:flex; flex-direction:column; gap:4px; }
+  .log::before { content:"Test log (не войдёт в модуль)"; color:var(--dim); font-size:11px; text-transform:uppercase; }
+  .entry { display:grid; grid-template-columns:1fr 40px; align-items:center; }
+  .entry .what { color:var(--dim); font-size:11px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .entry .what b { color:var(--text); font-weight:normal; }
+  .entry .total { font-size:18px; text-align:right; font-variant-numeric:tabular-nums; }
+  .entry.crit .total { color:var(--good); }
+  .entry.fumble .total { color:var(--bad); }
+  .entry:not(:first-child) { opacity:.55; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="abil" id="abil"></div>
+  <div class="tabs">
+    <button class="on" data-tab="skills">Skills</button>
+    <button data-tab="actions">Actions</button>
+  </div>
+  <div class="tab on" id="skills"></div>
+  <div class="tab" id="actions"></div>
+</div>
+<div class="log" id="log"></div>
+
+<script>
+// Данные Staart (Rogue 5 / Arcane Trickster), см. notes/staart-rolls.md
+const ABIL = [["STR",-1,-1],["DEX",4,7],["CON",3,3],["INT",1,4],["WIS",1,1],["CHA",0,0]]; // [имя, проверка, спас]
+const SKILLS = [
+  ["Acrobatics",7],["Animal Handling",1],["Arcana",1],["Athletics",-1],["Deception",3],
+  ["History",4],["Insight",4],["Intimidation",0],["Investigation",4],["Medicine",1],
+  ["Nature",1],["Perception",4],["Performance",0],["Persuasion",0],["Religion",1],
+  ["Sleight of Hand",10],["Stealth",10],["Survival",4],
+];
+const SA = [3, 6]; // Sneak Attack 3d6
+
+// d20 — бонус атаки/броска; dmg — [кости, плюс]; sa, crit — есть ли переключатели урона
+const D20_LABEL = { Weapons:"Attack", Spells:"Attack", Other:"Roll" };
+const ACTIONS = {
+  Weapons: [
+    { name:"Shortbow",  d20:7, dmg:[[[1,6]], 4], sa:true, crit:true },
+    { name:"Rapier +1", d20:8, dmg:[[[1,8]], 5], sa:true, crit:true },
+  ],
+  Spells: [
+    { name:"Fire Bolt",      d20:4, dmg:[[[2,10]], 0], crit:true },
+    { name:"Hellish Rebuke", dmg:[[[2,10]], 0] },
+  ],
+  Other: [
+    { name:"Initiative",    d20:4 },
+    { name:"Concentration", d20:3 },
+    { name:"Death save",    d20:0 },
+    { name:"Hit die",       dmg:[[[1,8]], 3], dmgLabel:"Roll" },
+  ],
+};
+
+// --- броски ---
+const d = f => 1 + Math.floor(Math.random() * f);
+const fmt = n => (n >= 0 ? "+" : "−") + Math.abs(n);
+
+function rollD20(name, bonus, mode) {
+  const a = d(20), b = d(20);
+  const kept = mode > 0 ? Math.max(a, b) : mode < 0 ? Math.min(a, b) : a;
+  const dice = mode ? `${a}, ${b} ${mode > 0 ? "adv" : "dis"}` : `${a}`;
+  log(name, `[${dice}] ${fmt(bonus)}`, kept + bonus, kept === 20 ? "crit" : kept === 1 ? "fumble" : "");
+  return kept;
+}
+
+// Крит (2024): кости урона бросаются дважды, плоский бонус — один раз
+function rollDmg(name, dice, flat, crit) {
+  const groups = dice.map(([n, f]) => Array.from({ length: crit ? n * 2 : n }, () => d(f)));
+  const total = groups.flat().reduce((s, x) => s + x, 0) + flat;
+  log(name + (crit ? " CRIT" : ""), groups.map(g => `[${g.join(",")}]`).join(" ") + (flat ? ` ${fmt(flat)}` : ""), total, crit ? "crit" : "");
+}
+
+function log(name, detail, total, cls) {
+  const el = document.createElement("div");
+  el.className = `entry ${cls}`;
+  el.innerHTML = `<div class="what"><b>${name}</b> ${detail}</div><div class="total">${total}</div>`;
+  const box = document.getElementById("log");
+  box.prepend(el);
+  while (box.children.length > 10) box.lastChild.remove();
+}
+
+// --- рендер ---
+const btn = (label, cls, fn) => Object.assign(document.createElement("button"), { className: cls, innerHTML: label, onclick: fn });
+const div = (cls, html = "") => Object.assign(document.createElement("div"), { className: cls, innerHTML: html });
+const blank = () => document.createElement("span");
+
+// name ▼ [bonus] ▲
+const DIS = "▼", ADV = "▲";
+const d20Cells = (name, bonus) => [
+  div("name", name),
+  btn(DIS, "dis", () => rollD20(name, bonus, -1)),
+  btn(fmt(bonus), "atk", () => rollD20(name, bonus, 0)),
+  btn(ADV, "adv", () => rollD20(name, bonus, 1)),
+];
+
+// Клик — обычный бросок, Shift — преимущество, Ctrl/Cmd — помеха (как в Foundry)
+const mode = e => e.shiftKey ? 1 : (e.ctrlKey || e.metaKey) ? -1 : 0;
+const abil = document.getElementById("abil");
+for (const [kind, i] of [["Check", 1], ["Save", 2]]) {
+  abil.append(div("lbl", kind));
+  for (const a of ABIL)
+    abil.append(btn(`${a[0]}<small>${fmt(a[i])}</small>`, "", e => rollD20(`${a[0]} ${kind.toLowerCase()}`, a[i], mode(e))));
+}
+
+const skills = document.getElementById("skills");
+for (const [name, bonus] of SKILLS) {
+  const row = div("row skill");
+  row.append(...d20Cells(name, bonus));
+  skills.append(row);
+}
+
+const actions = document.getElementById("actions");
+const toggle = (label, cls) => btn(label, `toggle ${cls}`, e => e.currentTarget.classList.toggle("on"));
+const isOn = el => el.classList.contains("on");
+
+for (const [group, rows] of Object.entries(ACTIONS)) {
+  actions.append(div("head", group));
+  for (const r of rows) {
+    const row = div("row action");
+    // Crit и Sneak — переключатели свойств урона; Crit включается сам на натуральной 20.
+    // Бросок урона учитывает включённые и сбрасывает их.
+    const sneak = r.sa ? toggle("Sneak", "sneak") : blank();
+    const crit = r.crit ? toggle("Crit", "crit") : blank();
+    const rollDamage = () => {
+      const [dice, flat] = r.dmg, withSA = r.sa && isOn(sneak), isCrit = r.crit && isOn(crit);
+      rollDmg(r.name + (withSA ? " + Sneak" : ""), withSA ? [...dice, SA] : dice, flat, isCrit);
+      for (const t of [sneak, crit]) t.classList.remove("on");
+    };
+    row.append(div("icon", r.name[0]), div("name", r.name));
+
+    const attack = m => () => {
+      const nat = rollD20(r.name, r.d20, m);
+      if (r.crit) crit.classList.toggle("on", nat === 20);
+    };
+    row.append(...(r.d20 !== undefined
+      ? [btn(DIS, "dis", attack(-1)), btn(D20_LABEL[group], "atk", attack(0)), btn(ADV, "adv", attack(1))]
+      : [blank(), blank(), blank()]));
+    const box = div("dmgbox");
+    if (r.dmg) box.append(btn(r.dmgLabel ?? "Damage", "dmg", rollDamage));
+    if (r.crit) box.append(crit);
+    if (r.sa) box.append(sneak);
+    row.append(blank(), box);
+    actions.append(row);
+  }
+}
+
+document.querySelectorAll(".tabs button").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tabs button, .tab").forEach(x => x.classList.remove("on"));
+  t.classList.add("on");
+  document.getElementById(t.dataset.tab).classList.add("on");
+});
+</script>
+</body>
+</html>
