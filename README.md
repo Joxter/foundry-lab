@@ -15,4 +15,13 @@
 Foundry). Тогда CSS/HBS обновляются без перезагрузки, на правку JS страница перезагружается сама
 (хук в `template/main.js`). Следятся только модули, включённые в запущенном мире.
 
+Где смотреть:
+- консоль браузера в приложении Foundry — Cmd+Option+I (или открыть http://localhost:30000 в Chrome);
+- лог сервера — `~/Library/Application Support/FoundryVTT/Logs/debug.<дата>.log`. Когда мир запущен
+  и модуль в нём включён, там есть `Watching for changes to lab-<name>`; нет строки — hot reload
+  для модуля не работает.
+
+Foundry — приложение из `/Applications`. Node-сборка той же версии (14.369) лежит в `~/Downloads`,
+но на этом Mac не стартует: macOS блокирует её нативный `classic-level.node`.
+
 Другой путь к Data: `FOUNDRY_DATA=/path/to/FoundryVTT ./lab link`.
