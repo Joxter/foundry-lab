@@ -4,18 +4,18 @@
 <meta charset="utf-8">
 <title>Staart — roll panel prototype</title>
 <style>
-  :root { --bg:#1d1b19; --panel:#2a2724; --line:#3a3632; --text:#e8e2d6; --dim:#9a9184; --acc:#c9a35b; --good:#7fb069; --bad:#d0605e; }
+  :root { --bg:#1d1b19; --panel:#2a2724; --zone:#23201d; --line:#3a3632; --text:#e8e2d6; --dim:#9a9184; --acc:#c9a35b; --good:#7fb069; --bad:#d0605e; }
   * { box-sizing: border-box; }
   body { margin:0; min-height:100vh; display:flex; justify-content:center; align-items:flex-start; gap:16px; padding:24px;
          background:#111; color:var(--text); font:13px/1.2 system-ui, sans-serif; }
-  .panel { width:410px; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:8px;
+  .panel { width:424px; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:8px;
            display:flex; flex-direction:column; gap:8px; }
   button { font:inherit; color:var(--text); background:var(--bg); border:1px solid var(--line); border-radius:4px;
            height:24px; padding:0; cursor:pointer; white-space:nowrap; font-variant-numeric:tabular-nums; }
   button:hover { border-color:var(--acc); }
 
-  /* характеристики и спасы */
-  .abil { display:grid; grid-template-columns:36px repeat(6, 1fr); gap:3px; align-items:center; }
+  /* характеристики и спасы (вверху вкладки Skills) */
+  .abil { display:grid; grid-template-columns:36px repeat(6, 1fr); gap:3px; align-items:center; margin-bottom:8px; }
   .abil .lbl { color:var(--dim); font-size:11px; }
   .abil button { height:34px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; }
   .abil button small { color:var(--dim); font-size:10px; }
@@ -24,20 +24,31 @@
   .tabs { display:flex; gap:4px; }
   .tabs button { flex:1; }
   .tabs button.on { background:var(--line); border-color:var(--acc); }
-  .tab { height:500px; overflow-y:auto; display:none; }
+  .tab { height:660px; overflow-y:auto; display:none; }
   .tab.on { display:block; }
 
   /* skills: name ▼ [bonus=roll] ▲
-     actions: icon name | ▼ [Attack] ▲ | [Damage|Crit|Sneak] */
+     actions: icon name | ▼ [Attack] ▲ | [Damage|Crit] */
   .row { display:grid; gap:3px; align-items:center; height:26px; }
   .row.skill  { grid-template-columns:120px 20px 44px 20px; }
   .row.action { grid-template-columns:24px 1fr 20px 58px 20px 6px 146px; }
-  .head { height:18px; margin-top:8px; color:var(--dim); font-size:11px; text-transform:uppercase; }
+  .head { height:18px; margin-top:8px; color:var(--dim); font-size:11px; text-transform:uppercase; display:flex; align-items:center; gap:10px; }
   .head:first-child { margin-top:0; }
   .icon { width:22px; height:22px; border-radius:3px; background:var(--line); color:var(--dim);
           display:flex; align-items:center; justify-content:center; font-size:11px; }
+  img.icon { object-fit:cover; }
   .row .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-left:4px; }
-  /* урон — одна составная кнопка: [Damage|Crit|Sneak] */
+  /* в actions имя кликабельно (в модуле открывает лист предмета) */
+  .action .name.link { cursor:pointer; }
+  .action .name.link:hover { text-decoration:underline; }
+
+  /* ячейки: кружки рядом с заголовком; потраченные — пустые, перечёркнутые красной косой чертой */
+  .slots { display:flex; gap:4px; }
+  .pip { width:10px; height:10px; border-radius:50%; border:1px solid var(--acc); background:var(--acc); cursor:pointer; position:relative; }
+  .pip.used { background:none; border-color:var(--dim); }
+  .pip.used::after { content:""; position:absolute; left:3.5px; top:-3px; width:1.5px; height:14px; background:var(--bad); transform:rotate(45deg); }
+
+  /* урон — составная кнопка: [Damage|Crit] */
   .dmgbox { display:flex; }
   .dmgbox button { border-radius:0; margin-left:-1px; }
   .dmgbox button:first-child { border-radius:4px 0 0 4px; margin-left:0; }
@@ -45,8 +56,8 @@
   .dmgbox button:only-child { border-radius:4px; }
   .dmgbox .dmg { width:62px; }
   .dmgbox .crit { width:38px; }
-  .dmgbox .sneak { width:47px; }
   .dmgbox .toggle { background:var(--line); border-color:#4a4540; color:var(--dim); }
+
   /* треугольники преимущества/помехи — без фона и рамки */
   .row button.dis, .row button.adv { background:none; border:none; font-size:12px; }
   .row button.dis { color:var(--bad); }
@@ -56,6 +67,21 @@
   .row button.dmg { background:#4a2624; border-color:#6e3a36; color:#f2c4bf; }
   .row button.atk:hover, .row button.dmg:hover { filter:brightness(1.25); }
   .row button.toggle.on { background:#3d3520; border-color:var(--acc); color:var(--acc); }
+
+  /* оружие — отдельная подложка: строки оружия + зона модификаторов урона */
+  .zone { background:var(--zone); border:1px solid var(--line); border-radius:6px; padding:6px; margin-bottom:4px; }
+  /* строки вне подложки сдвинуты на её отступ+рамку, чтобы столбцы совпадали */
+  #actions > .row, #actions > .head { padding:0 7px; }
+  .mods { display:grid; grid-template-columns:1fr 176px; gap:6px; margin-bottom:6px; }
+  .checks { display:flex; flex-direction:column; justify-content:space-around; }
+  .checks label { display:flex; align-items:center; gap:6px; cursor:pointer; height:24px; }
+  .checks input { accent-color:var(--acc); margin:0; cursor:pointer; }
+  .checks small { color:var(--dim); font-variant-numeric:tabular-nums; }
+  /* Cunning Strike: сегментный контрол 2×2, первая ячейка — «ничего» */
+  .seg { display:grid; grid-template-columns:1fr 1fr; gap:3px; }
+  .seg button { background:var(--line); border-color:#4a4540; color:var(--dim); }
+  .seg button.on { background:#3d3520; border-color:var(--acc); color:var(--acc); }
+  .seg-title { grid-column:1 / 3; color:var(--dim); font-size:11px; text-transform:uppercase; height:14px; }
 
   /* лог: фиксированная высота, новые сверху */
   .log { width:280px; height:300px; overflow:hidden; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:8px;
@@ -72,13 +98,12 @@
 </head>
 <body>
 <div class="panel">
-  <div class="abil" id="abil"></div>
   <div class="tabs">
-    <button class="on" data-tab="skills">Skills</button>
-    <button data-tab="actions">Actions</button>
+    <button class="on" data-tab="actions">Actions</button>
+    <button data-tab="skills">Skills</button>
   </div>
-  <div class="tab on" id="skills"></div>
-  <div class="tab" id="actions"></div>
+  <div class="tab on" id="actions"></div>
+  <div class="tab" id="skills"><div class="abil" id="abil"></div></div>
 </div>
 <div class="log" id="log"></div>
 
@@ -91,26 +116,47 @@ const SKILLS = [
   ["Nature",1],["Perception",4],["Performance",0],["Persuasion",0],["Religion",1],
   ["Sleight of Hand",10],["Stealth",10],["Survival",4],
 ];
-const SA = [3, 6]; // Sneak Attack 3d6
-
-// d20 — бонус атаки/броска; dmg — [кости, плюс]; sa, crit — есть ли переключатели урона
-const D20_LABEL = { Weapons:"Attack", Spells:"Attack", Other:"Roll" };
-const ACTIONS = {
-  Weapons: [
-    { name:"Shortbow",  d20:7, dmg:[[[1,6]], 4], sa:true, crit:true },
-    { name:"Rapier +1", d20:8, dmg:[[[1,8]], 5], sa:true, crit:true },
-  ],
-  Spells: [
-    { name:"Fire Bolt",      d20:4, dmg:[[[2,10]], 0], crit:true },
-    { name:"Hellish Rebuke", dmg:[[[2,10]], 0] },
-  ],
-  Other: [
-    { name:"Initiative",    d20:4 },
-    { name:"Concentration", d20:3 },
-    { name:"Death save",    d20:0 },
-    { name:"Hit die",       dmg:[[[1,8]], 3], dmgLabel:"Roll" },
-  ],
+const SNEAK_DICE = 3; // Sneak Attack 3d6
+// Cunning Strike: 2×2, первая ячейка — «ничего». Каждый эффект стоит 1d6 из Sneak Attack. DC 15.
+const CUNNING = [
+  ["none", "×"], ["trip", "Trip"],
+  ["poison", "Poison"], ["withdraw", "Withdraw"],
+];
+const CUNNING_EFFECT = {
+  trip: "цель: спас DEX DC 15, иначе Prone (Large и меньше)",
+  poison: "цель: спас CON DC 15, иначе Poisoned на 1 мин",
+  withdraw: "отход на ½ скорости без атак по возможности",
 };
+
+// Иконки — из ядра Foundry, установленного на этом Mac (у Shortbow иконка из PHB, её нет — будет буква)
+const ICONS = "file://" + encodeURI("/Applications/Foundry Virtual Tabletop.app/Contents/Resources/app/public/");
+const SLOTS = { 1: { value: 3, max: 3 } }; // ячейки по кругам
+
+// d20 — бонус атаки/броска; dmg — [кости, плюс]; sa — подходит ли для Sneak Attack; crit — переключатель Crit;
+// cast — кнопка Cast вместо Attack; lvl — круг заклинания (0 = заговор). Порядок — как в модуле.
+const WEAPONS = [
+  { name:"Shortbow",  img:"modules/dnd-players-handbook/assets/icons/items/shortbow.webp", d20:7, dmg:[[[1,6]], 4], sa:true },
+  { name:"Rapier +1", img:"icons/weapons/swords/sword-guard-engraved-worn.webp", d20:8, dmg:[[[1,8]], 5], sa:true },
+];
+const SPELLS = [
+  { name:"Fire Bolt",      lvl:0, img:"icons/magic/fire/projectile-fireball-orange-green.webp", d20:4, dmg:[[[2,10]], 0], crit:true },
+  { name:"Minor Illusion", lvl:0, img:"icons/sundries/gaming/playing-cards.webp", cast:true },
+  { name:"Mage Hand",      lvl:0, img:"icons/magic/light/hand-sparks-smoke-teal.webp", cast:true },
+  { name:"Light",          lvl:0, img:"icons/sundries/lights/candle-pillar-lit-yellow.webp", cast:true },
+  { name:"Thaumaturgy",    lvl:0, img:"icons/environment/people/cleric-orange.webp", cast:true },
+  { name:"Hellish Rebuke", lvl:1, img:"icons/magic/fire/flame-burning-skeleton-explosion.webp", cast:true, dmg:[[[2,10]], 0] },
+  { name:"Shield",         lvl:1, img:"icons/equipment/shield/heater-crystal-blue.webp", cast:true },
+  { name:"Disguise Self",  lvl:1, img:"icons/equipment/head/mask-carved-bird-grey-pink.webp", cast:true },
+  { name:"Silent Image",   lvl:1, img:"icons/magic/light/explosion-star-glow-silhouette.webp", cast:true },
+  { name:"Find Familiar",  lvl:1, img:"icons/creatures/mammals/spirit-deer-herd-blue.webp", cast:true },
+  { name:"Darkness",       lvl:2, img:"icons/magic/unholy/orb-rays-blue.webp", cast:true },
+];
+const OTHER = [
+  { name:"Initiative",    d20:4 },
+  { name:"Concentration", d20:3 },
+  { name:"Death save",    d20:0 },
+  { name:"Hit die",       dmg:[[[1,8]], 3], dmgLabel:"Roll" },
+];
 
 // --- броски ---
 const d = f => 1 + Math.floor(Math.random() * f);
@@ -144,16 +190,29 @@ function log(name, detail, total, cls) {
 const btn = (label, cls, fn) => Object.assign(document.createElement("button"), { className: cls, innerHTML: label, onclick: fn });
 const div = (cls, html = "") => Object.assign(document.createElement("div"), { className: cls, innerHTML: html });
 const blank = () => document.createElement("span");
-
-// name ▼ [bonus] ▲
 const DIS = "▼", ADV = "▲";
-const d20Cells = (name, bonus) => [
-  div("name", name),
-  btn(DIS, "dis", () => rollD20(name, bonus, -1)),
-  btn(fmt(bonus), "atk", () => rollD20(name, bonus, 0)),
-  btn(ADV, "adv", () => rollD20(name, bonus, 1)),
+
+// ▼ [label] ▲; onRoll получает натуральный d20
+const d20Buttons = (name, bonus, label, onRoll = () => {}) => [
+  btn(DIS, "dis", () => onRoll(rollD20(name, bonus, -1))),
+  btn(label, "atk", () => onRoll(rollD20(name, bonus, 0))),
+  btn(ADV, "adv", () => onRoll(rollD20(name, bonus, 1))),
 ];
 
+const icon = r => {
+  if (!r.img) return blank();
+  const img = Object.assign(document.createElement("img"), { className: "icon", src: ICONS + r.img });
+  img.onerror = () => img.replaceWith(div("icon", r.name[0]));
+  return img;
+};
+// Имя: клик в модуле открывает лист предмета, здесь — запись в лог
+const nameCell = r => {
+  const el = div(r.img ? "name link" : "name", r.name);
+  if (r.img) el.onclick = () => log(`Sheet: ${r.name}`, "открыт лист предмета", "", "");
+  return el;
+};
+
+// ===== Skills: характеристики, спасы, навыки =====
 // Клик — обычный бросок, Shift — преимущество, Ctrl/Cmd — помеха (как в Foundry)
 const mode = e => e.shiftKey ? 1 : (e.ctrlKey || e.metaKey) ? -1 : 0;
 const abil = document.getElementById("abil");
@@ -162,48 +221,129 @@ for (const [kind, i] of [["Check", 1], ["Save", 2]]) {
   for (const a of ABIL)
     abil.append(btn(`${a[0]}<small>${fmt(a[i])}</small>`, "", e => rollD20(`${a[0]} ${kind.toLowerCase()}`, a[i], mode(e))));
 }
-
 const skills = document.getElementById("skills");
 for (const [name, bonus] of SKILLS) {
   const row = div("row skill");
-  row.append(...d20Cells(name, bonus));
+  row.append(div("name", name), ...d20Buttons(name, bonus, fmt(bonus)));
   skills.append(row);
 }
 
 const actions = document.getElementById("actions");
-const toggle = (label, cls) => btn(label, `toggle ${cls}`, e => e.currentTarget.classList.toggle("on"));
-const isOn = el => el.classList.contains("on");
 
-for (const [group, rows] of Object.entries(ACTIONS)) {
-  actions.append(div("head", group));
-  for (const r of rows) {
-    const row = div("row action");
-    // Crit и Sneak — переключатели свойств урона; Crit включается сам на натуральной 20.
-    // Бросок урона учитывает включённые и сбрасывает их.
-    const sneak = r.sa ? toggle("Sneak", "sneak") : blank();
-    const crit = r.crit ? toggle("Crit", "crit") : blank();
-    const rollDamage = () => {
-      const [dice, flat] = r.dmg, withSA = r.sa && isOn(sneak), isCrit = r.crit && isOn(crit);
-      rollDmg(r.name + (withSA ? " + Sneak" : ""), withSA ? [...dice, SA] : dice, flat, isCrit);
-      for (const t of [sneak, crit]) t.classList.remove("on");
-    };
-    row.append(div("icon", r.name[0]), div("name", r.name));
+// ===== Weapons: подложка — сверху общие модификаторы урона, под ними оружие =====
+// Модификаторы общие для всего оружия. Crit включается сам на натуральной 20.
+// Cunning Strike требует Sneak: выбор эффекта включает Sneak, выключение Sneak сбрасывает эффект.
+// После броска урона всё сбрасывается.
+const mods = { crit: false, sneak: false, cunning: "none" };
+const zone = div("zone");
+const weaponRows = WEAPONS.map(w => {
+  const row = div("row action");
+  const box = div("dmgbox");
+  box.append(btn("Damage", "dmg", () => rollWeapon(w)));
+  row.append(icon(w), nameCell(w),
+    ...d20Buttons(w.name, w.d20, "Attack", nat => { if (nat === 20) { mods.crit = true; renderMods(); } }),
+    blank(), box);
+  return row;
+});
+const modsEl = div("mods");
+const checks = div("checks");
+const check = (key, label) => {
+  const input = Object.assign(document.createElement("input"), { type: "checkbox" });
+  input.onchange = () => {
+    mods[key] = input.checked;
+    if (key === "sneak" && !input.checked) mods.cunning = "none";
+    renderMods();
+  };
+  const el = document.createElement("label");
+  el.append(input, label);
+  return [el, input];
+};
+const [critLabel, critInput] = check("crit", "Crit");
+const [sneakLabel, sneakInput] = check("sneak", "Sneak Attack ");
+const sneakDiceEl = document.createElement("small");
+sneakLabel.append(sneakDiceEl);
+checks.append(critLabel, sneakLabel);
+const seg = div("seg", `<div class="seg-title">Cunning Strike</div>`);
+const segButtons = CUNNING.map(([key, label]) => {
+  const b = btn(label, "", () => {
+    mods.cunning = key;
+    if (key !== "none") mods.sneak = true;
+    renderMods();
+  });
+  b.dataset.key = key;
+  seg.append(b);
+  return b;
+});
+modsEl.append(checks, seg);
+zone.append(modsEl, ...weaponRows);
+actions.append(zone);
 
-    const attack = m => () => {
-      const nat = rollD20(r.name, r.d20, m);
-      if (r.crit) crit.classList.toggle("on", nat === 20);
-    };
-    row.append(...(r.d20 !== undefined
-      ? [btn(DIS, "dis", attack(-1)), btn(D20_LABEL[group], "atk", attack(0)), btn(ADV, "adv", attack(1))]
-      : [blank(), blank(), blank()]));
-    const box = div("dmgbox");
-    if (r.dmg) box.append(btn(r.dmgLabel ?? "Damage", "dmg", rollDamage));
-    if (r.crit) box.append(crit);
-    if (r.sa) box.append(sneak);
-    row.append(blank(), box);
-    actions.append(row);
-  }
+const sneakDice = () => SNEAK_DICE - (mods.cunning !== "none" ? 1 : 0);
+function renderMods() {
+  critInput.checked = mods.crit;
+  sneakInput.checked = mods.sneak;
+  sneakDiceEl.textContent = `${sneakDice()}d6`;
+  for (const b of segButtons) b.classList.toggle("on", b.dataset.key === mods.cunning);
 }
+renderMods();
+
+function rollWeapon(w) {
+  const [dice, flat] = w.dmg;
+  const withSneak = mods.sneak && w.sa;
+  rollDmg(w.name + (withSneak ? " + Sneak" : ""), withSneak ? [...dice, [sneakDice(), 6]] : dice, flat, mods.crit);
+  if (withSneak && mods.cunning !== "none")
+    log(`Cunning Strike: ${CUNNING.find(([k]) => k === mods.cunning)[1]}`, CUNNING_EFFECT[mods.cunning], "", "");
+  Object.assign(mods, { crit: false, sneak: false, cunning: "none" });
+  renderMods();
+}
+
+// ===== Spells: по кругам, у каждого свой заголовок и ячейки =====
+// Клик по кружку: по заполненному — потратить его и правее, по пустому — восстановить до него (как на листе Foundry)
+const slotEls = {};
+const renderSlots = lvl => {
+  const s = SLOTS[lvl];
+  slotEls[lvl].replaceChildren(...Array.from({ length: s.max }, (_, i) => {
+    const pip = div(i < s.value ? "pip" : "pip used");
+    pip.onclick = () => { s.value = i < s.value ? i : i + 1; renderSlots(lvl); };
+    return pip;
+  }));
+};
+const cast = r => () => {
+  const slot = SLOTS[r.lvl];
+  if (!r.lvl) return log(`Cast ${r.name}`, "", "", "");
+  if (!slot?.value) return log(`Cast ${r.name}`, "нет ячеек", "", "fumble");
+  slot.value--; renderSlots(r.lvl);
+  log(`Cast ${r.name}`, `ячейка ${r.lvl}`, "", "");
+};
+
+// Строка заклинания или прочего: icon name | ▼ [Attack/Roll/Cast] ▲ | [Damage|Crit]
+const actionRow = (r, d20Label) => {
+  const row = div("row action");
+  const crit = r.crit ? btn("Crit", "toggle crit", e => e.currentTarget.classList.toggle("on")) : null;
+  const rollDamage = () => {
+    rollDmg(r.name, r.dmg[0], r.dmg[1], crit?.classList.contains("on"));
+    crit?.classList.remove("on");
+  };
+  row.append(icon(r), nameCell(r));
+  row.append(...(r.d20 !== undefined
+    ? d20Buttons(r.name, r.d20, d20Label, nat => crit?.classList.toggle("on", nat === 20))
+    : r.cast ? [blank(), btn("Cast", "atk", cast(r)), blank()]
+    : [blank(), blank(), blank()]));
+  const box = div("dmgbox");
+  if (r.dmg) box.append(btn(r.dmgLabel ?? "Damage", "dmg", rollDamage));
+  if (crit) box.append(crit);
+  row.append(blank(), box);
+  return row;
+};
+
+for (const lvl of [...new Set(SPELLS.map(r => r.lvl))].sort()) {
+  const head = div("head", lvl ? `Spell level ${lvl}` : "Cantrip");
+  if (SLOTS[lvl]) { head.append(slotEls[lvl] = div("slots")); renderSlots(lvl); }
+  actions.append(head, ...SPELLS.filter(r => r.lvl === lvl).map(r => actionRow(r, "Attack")));
+}
+
+// ===== Other =====
+actions.append(div("head", "Other"), ...OTHER.map(r => actionRow(r, "Roll")));
 
 document.querySelectorAll(".tabs button").forEach(t => t.onclick = () => {
   document.querySelectorAll(".tabs button, .tab").forEach(x => x.classList.remove("on"));

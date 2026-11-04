@@ -145,5 +145,4 @@ DC = 8 + DEX + мастерство = 15. В Foundry есть активност
 - **Studded Leather не экипирована**, поэтому AC считается 14 вместо 16.
 - **Rapier +1 не экипирована.**
 - **Weapon Mastery выбраны Dagger и Shortsword**, но такого оружия в инвентаре нет. У Shortbow есть Vex, но Foundry его не предложит, пока Shortbow не выбран в мастерстве. У Rapier mastery не заполнен (по 2024 должен быть Vex).
-- **Hellish Rebuke**: активация указана как Action, а должна быть Reaction.
 - Mage Hand в списке **дважды** (от Spellcasting и от Legerdemain).

@@ -1,0 +1,34 @@
+{
+  "id": "lab-staart",
+  "title": "Lab: Staart roll panel",
+  "description": "Панель бросков: навыки, атаки, урон с Crit/Sneak без диалогов",
+  "version": "0.0.1",
+  "compatibility": {
+    "minimum": "14",
+    "verified": "14"
+  },
+  "esmodules": [
+    "main.js"
+  ],
+  "styles": [
+    "style.css"
+  ],
+  "flags": {
+    "hotReload": {
+      "extensions": [
+        "js",
+        "css",
+        "hbs",
+        "json"
+      ]
+    }
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system"
+      }
+    ]
+  }
+}

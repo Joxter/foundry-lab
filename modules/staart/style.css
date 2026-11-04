@@ -1,0 +1,76 @@
+/* Перенесено из prototypes/staart.html. Всё внутри #staart-panel, кнопки сброшены от стилей Foundry. */
+#staart-panel {
+  --bg:#1d1b19; --panel:#2a2724; --zone:#23201d; --line:#3a3632; --text:#e8e2d6; --dim:#9a9184; --acc:#c9a35b; --good:#7fb069; --bad:#d0605e;
+  color:var(--text); font-size:13px; line-height:1.2;
+}
+#staart-panel .window-content { background:var(--panel); padding:8px; display:flex; flex-direction:column; gap:8px; }
+#staart-panel button {
+  all:unset; box-sizing:border-box; height:24px; text-align:center; cursor:pointer; white-space:nowrap;
+  color:var(--text); background:var(--bg); border:1px solid var(--line); border-radius:4px; font-variant-numeric:tabular-nums;
+}
+#staart-panel button:hover { border-color:var(--acc); }
+#staart-panel .empty { color:var(--dim); text-align:center; margin:20px 0; }
+
+/* характеристики и спасы (вверху вкладки Skills) */
+#staart-panel .abil { display:grid; grid-template-columns:36px repeat(6, 1fr); gap:3px; align-items:center; margin-bottom:8px; }
+#staart-panel .abil .lbl { color:var(--dim); font-size:11px; }
+#staart-panel .abil button { height:34px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; }
+#staart-panel .abil button small { color:var(--dim); font-size:10px; }
+
+/* табы: фиксированная высота, чтобы окно не прыгало */
+#staart-panel .tabs { display:flex; gap:4px; }
+#staart-panel .tabs button { flex:1; }
+#staart-panel .tabs button.on { background:var(--line); border-color:var(--acc); }
+#staart-panel .tab { height:660px; overflow-y:auto; display:none; }
+#staart-panel .tab.on { display:block; }
+
+/* skills: name ▼ [bonus] ▲;  actions: icon name | ▼ [Attack] ▲ | [Damage|Crit] */
+#staart-panel .row { display:grid; gap:3px; align-items:center; height:26px; }
+#staart-panel .row.skill  { grid-template-columns:120px 20px 44px 20px; }
+#staart-panel .row.action { grid-template-columns:24px 1fr 20px 58px 20px 6px 146px; }
+#staart-panel .head { height:18px; margin-top:8px; color:var(--dim); font-size:11px; text-transform:uppercase; display:flex; align-items:center; gap:10px; }
+#staart-panel .icon { width:22px; height:22px; border:none; border-radius:3px; object-fit:cover; }
+#staart-panel .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-left:4px; }
+/* в actions имя кликабельно — открывает лист предмета */
+#staart-panel .name.link { cursor:pointer; }
+#staart-panel .name.link:hover { text-decoration:underline; }
+/* строки вне подложки сдвинуты на её отступ+рамку, чтобы столбцы совпадали */
+#staart-panel .actions > .row, #staart-panel .actions > .head { padding:0 7px; }
+
+/* ячейки: кружки рядом с заголовком; потраченные — пустые, перечёркнутые красной косой чертой */
+#staart-panel .slots { display:flex; gap:4px; }
+#staart-panel .pip { width:10px; height:10px; border-radius:50%; border:1px solid var(--acc); background:var(--acc); cursor:pointer; position:relative; box-sizing:border-box; }
+#staart-panel .pip.used { background:none; border-color:var(--dim); }
+#staart-panel .pip.used::after { content:""; position:absolute; left:3.5px; top:-3px; width:1.5px; height:14px; background:var(--bad); transform:rotate(45deg); }
+
+#staart-panel button.dis, #staart-panel button.adv { background:none; border:none; font-size:12px; }
+#staart-panel button.dis { color:var(--bad); }
+#staart-panel button.adv { color:var(--good); }
+#staart-panel button.dis:hover, #staart-panel button.adv:hover { filter:brightness(1.4); }
+#staart-panel button.atk { background:#4a3c22; border-color:#6b5730; color:#f0d9a8; }
+#staart-panel button.dmg { background:#4a2624; border-color:#6e3a36; color:#f2c4bf; }
+#staart-panel button.atk:hover, #staart-panel button.dmg:hover { filter:brightness(1.25); }
+
+/* урон — составная кнопка [Damage|Crit] */
+#staart-panel .dmgbox { display:flex; }
+#staart-panel .dmgbox button { border-radius:0; margin-left:-1px; }
+#staart-panel .dmgbox button:first-child { border-radius:4px 0 0 4px; margin-left:0; }
+#staart-panel .dmgbox button:last-child { border-radius:0 4px 4px 0; }
+#staart-panel .dmgbox button:only-child { border-radius:4px; }
+#staart-panel .dmgbox .dmg { width:62px; }
+#staart-panel .dmgbox .crit { width:38px; }
+#staart-panel .dmgbox .toggle { background:var(--line); border-color:#4a4540; color:var(--dim); }
+#staart-panel .dmgbox .toggle.on { background:#3d3520; border-color:var(--acc); color:var(--acc); }
+
+/* оружие — подложка: сверху модификаторы урона, под ними оружие */
+#staart-panel .zone { background:var(--zone); border:1px solid var(--line); border-radius:6px; padding:6px; margin-bottom:4px; }
+#staart-panel .mods { display:grid; grid-template-columns:1fr 176px; gap:6px; margin-bottom:6px; }
+#staart-panel .checks { display:flex; flex-direction:column; justify-content:space-around; }
+#staart-panel .checks label { display:flex; align-items:center; gap:6px; cursor:pointer; height:24px; }
+#staart-panel .checks input { accent-color:var(--acc); margin:0; cursor:pointer; }
+#staart-panel .checks small { color:var(--dim); font-variant-numeric:tabular-nums; }
+/* Cunning Strike: сегментный контрол 2×2, первая ячейка — «ничего» */
+#staart-panel .seg { display:grid; grid-template-columns:1fr 1fr; gap:3px; }
+#staart-panel .seg button { background:var(--line); border-color:#4a4540; color:var(--dim); }
+#staart-panel .seg button.on { background:#3d3520; border-color:var(--acc); color:var(--acc); }
+#staart-panel .seg-title { grid-column:1 / 3; color:var(--dim); font-size:11px; text-transform:uppercase; height:14px; }
