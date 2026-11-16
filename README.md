@@ -1,13 +1,16 @@
 # foundry-lab
 
 Песочница для быстрых модулей Foundry V14. Модуль `modules/<name>` подключается в Foundry
-симлинком как `lab-<name>`; не понравилось — `./lab drop <name>`.
+симлинком как `lab-<name>`; не понравилось — `npm run drop <name>`.
 
 ```sh
-./lab new chat-filter   # modules/chat-filter из template/, симлинк в Data/modules/lab-chat-filter
-./lab link              # переподключить все (после клона)
-./lab drop chat-filter  # удалить
+npm run new chat-filter   # modules/chat-filter из template/, симлинк в Data/modules/lab-chat-filter
+npm run link              # переподключить все (после клона)
+npm run drop chat-filter  # удалить
+npm run release staart    # выпустить версию модуля, см. ниже
 ```
+
+npm-скрипты вызывают `./lab` (shell), его можно звать и напрямую. Нужен пакет — `npm i -D <пакет>`.
 
 После `new` — включить модуль в мире (Manage Modules), один раз.
 
@@ -24,13 +27,13 @@ Foundry). Тогда CSS/HBS обновляются без перезагруз�
 Foundry — приложение из `/Applications`. Node-сборка той же версии (14.369) лежит в `~/Downloads`,
 но на этом Mac не стартует: macOS блокирует её нативный `classic-level.node`.
 
-Другой путь к Data: `FOUNDRY_DATA=/path/to/FoundryVTT ./lab link`.
+Другой путь к Data: `FOUNDRY_DATA=/path/to/FoundryVTT npm run link`.
 
 ## Отдать модуль в настоящую игру
 
-`./lab release <name>` берёт версию из `modules/<name>/module.json`, коммитит и пушит ссылку на архив,
+`npm run release <name>` берёт версию из `modules/<name>/module.json`, коммитит и пушит ссылку на архив,
 собирает `<name>.zip` и создаёт GitHub-релиз `<name>-v<версия>`. Новая версия: поднять `version`
-в `module.json`, закоммитить, `./lab release <name>`.
+в `module.json`, закоммитить, `npm run release <name>`.
 
 Мастеру — manifest URL (Add-on Modules → Install Module → Manifest URL):
 `https://raw.githubusercontent.com/Joxter/foundry-lab/master/modules/<name>/module.json`.

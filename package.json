@@ -1,0 +1,11 @@
+{
+  "name": "foundry-lab",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "new": "./lab new",
+    "link": "./lab link",
+    "drop": "./lab drop",
+    "release": "./lab release"
+  }
+}
