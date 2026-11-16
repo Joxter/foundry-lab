@@ -23,7 +23,7 @@
   ],
   "url": "https://github.com/Joxter/foundry-lab",
   "manifest": "https://raw.githubusercontent.com/Joxter/foundry-lab/master/modules/staart/module.json",
-  "download": "https://github.com/Joxter/foundry-lab/releases/download/staart-v0.1.0/staart.zip",
+  "download": "https://github.com/Joxter/foundry-lab/releases/download/staart-v0.2.0/staart.zip",
   "flags": {
     "hotReload": {
       "extensions": [
