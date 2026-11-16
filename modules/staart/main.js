@@ -232,7 +232,8 @@ class RollPanel extends ApplicationV2 {
     const rolls = [];
     if (sneak) {
       const type = [...item.system.damage.base.types][0];
-      rolls.push({ parts: [this.sneakFormula], options: { type, types: [type] } });
+      // data обязательно: dnd5e пишет в config.data.roll для каждого броска урона
+      rolls.push({ parts: [this.sneakFormula], data: dmg.getRollData(), options: { type, types: [type] } });
     }
     await dmg.rollDamage({ isCritical: m.crit, rolls }, NO_DIALOG);
     // Cunning Strike: запускаем активность с тем же именем на предмете (Poison/Trip — карточка со спасом цели)
