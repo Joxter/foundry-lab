@@ -131,6 +131,12 @@ class RollPanel extends ApplicationV2 {
     content.innerHTML = html;
   }
 
+  // Закрыли (крестиком или Shift+R) — при следующей загрузке не открывать
+  _onClose(options) {
+    super._onClose(options);
+    game.settings.set(ID, "open", false);
+  }
+
   // Заклинания по кругу; внутри круга: боевые, иллюзии, Mage Hand, остальное.
   // Mage Hand бывает дважды: обычный кантрип и копия от Legerdemain (cachedFor, бонусное действие) —
   // оставляем копию, обычный прячем.
@@ -247,15 +253,22 @@ class RollPanel extends ApplicationV2 {
 
 const panel = new RollPanel();
 
+// Панель открывается только у того, кто сам её открыл (Shift+R); состояние хранится в этом браузере.
+// Так модуль, включённый мастером для всего мира, ничего не показывает остальным игрокам.
 Hooks.once("init", () => {
+  game.settings.register(ID, "open", { scope: "client", config: false, type: Boolean, default: false });
   game.keybindings.register(ID, "toggle", {
     name: "Toggle roll panel",
     editable: [{ key: "KeyR", modifiers: ["Shift"] }],
-    onDown: () => { panel.rendered ? panel.close() : panel.render({ force: true }); return true; },
+    onDown: () => {
+      if (panel.rendered) panel.close();
+      else { panel.render({ force: true }); game.settings.set(ID, "open", true); }
+      return true;
+    },
   });
 });
 
-Hooks.once("ready", () => panel.render({ force: true }));
+Hooks.once("ready", () => game.settings.get(ID, "open") && panel.render({ force: true }));
 
 // Перерисовка при смене токена и изменении персонажа/предметов
 const rerender = doc => {

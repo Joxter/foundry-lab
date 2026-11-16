@@ -6,5 +6,8 @@
   "compatibility": { "minimum": "14", "verified": "14" },
   "esmodules": ["main.js"],
   "styles": ["style.css"],
+  "url": "https://github.com/Joxter/foundry-lab",
+  "manifest": "https://raw.githubusercontent.com/Joxter/foundry-lab/master/modules/__NAME__/module.json",
+  "download": "https://github.com/Joxter/foundry-lab/releases/download/__NAME__-v0.0.1/__NAME__.zip",
   "flags": { "hotReload": { "extensions": ["js", "css", "hbs", "json"] } }
 }

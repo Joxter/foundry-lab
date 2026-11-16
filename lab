@@ -4,6 +4,7 @@
 #   ./lab new <name>   создать модуль из шаблона и подключить
 #   ./lab link         подключить все (после клона или переустановки Foundry)
 #   ./lab drop <name>  отключить и удалить
+#   ./lab release <name>  выпустить версию из module.json: GitHub-релиз <name>-v<версия> с <name>.zip
 set -e
 cd "$(dirname "$0")"
 DATA="${FOUNDRY_DATA:-$HOME/Library/Application Support/FoundryVTT/Data}/modules"
@@ -22,5 +23,16 @@ case "$1" in
   drop)
     [ -n "$2" ] || { echo "usage: ./lab drop <name>"; exit 1; }
     rm -f "$DATA/lab-$2"; rm -rf "modules/$2"; echo "dropped lab-$2" ;;
+  release)
+    [ -n "$2" ] || { echo "usage: ./lab release <name>"; exit 1; }
+    m="modules/$2/module.json"
+    v=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$m"); tag="$2-v$v"
+    sed -i '' "s#releases/download/[^\"]*#releases/download/$tag/$2.zip#" "$m"
+    git commit -qm "$tag" -- "$m" || true
+    git diff --quiet HEAD -- "modules/$2" || { echo "modules/$2 has uncommitted changes"; exit 1; }
+    git push -q
+    zip="/tmp/$2.zip"; rm -f "$zip"; (cd "modules/$2" && zip -qr "$zip" . -x '.*')
+    gh release create "$tag" "$zip" --title "$tag" --notes "Manifest URL: $(sed -n 's/.*"manifest": *"\([^"]*\)".*/\1/p' "$m")"
+    echo "released $tag" ;;
   *) sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//' ;;
 esac

@@ -25,3 +25,17 @@ Foundry — приложение из `/Applications`. Node-сборка той 
 но на этом Mac не стартует: macOS блокирует её нативный `classic-level.node`.
 
 Другой путь к Data: `FOUNDRY_DATA=/path/to/FoundryVTT ./lab link`.
+
+## Отдать модуль в настоящую игру
+
+`./lab release <name>` берёт версию из `modules/<name>/module.json`, коммитит и пушит ссылку на архив,
+собирает `<name>.zip` и создаёт GitHub-релиз `<name>-v<версия>`. Новая версия: поднять `version`
+в `module.json`, закоммитить, `./lab release <name>`.
+
+Мастеру — manifest URL (Add-on Modules → Install Module → Manifest URL):
+`https://raw.githubusercontent.com/Joxter/foundry-lab/master/modules/<name>/module.json`.
+Обновления Foundry подтягивает по нему же.
+
+Модули:
+- `staart` — панель бросков (Shift+R открыть/закрыть). Открывается только у того, кто её открыл,
+  остальным игрокам не мешает.

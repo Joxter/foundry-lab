@@ -1,11 +1,19 @@
 {
   "id": "lab-staart",
-  "title": "Lab: Staart roll panel",
-  "description": "Панель бросков: навыки, атаки, урон с Crit/Sneak без диалогов",
-  "version": "0.0.1",
+  "title": "Staart roll panel (lab)",
+  "description": "Панель бросков для персонажа dnd5e: навыки, атаки, урон с Crit/Sneak Attack/Cunning Strike без диалогов. Открыть/закрыть: Shift+R.",
+  "version": "0.1.0",
   "compatibility": {
     "minimum": "14",
     "verified": "14"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system"
+      }
+    ]
   },
   "esmodules": [
     "main.js"
@@ -13,6 +21,9 @@
   "styles": [
     "style.css"
   ],
+  "url": "https://github.com/Joxter/foundry-lab",
+  "manifest": "https://raw.githubusercontent.com/Joxter/foundry-lab/master/modules/staart/module.json",
+  "download": "https://github.com/Joxter/foundry-lab/releases/download/staart-v0.1.0/staart.zip",
   "flags": {
     "hotReload": {
       "extensions": [
@@ -22,13 +33,5 @@
         "json"
       ]
     }
-  },
-  "relationships": {
-    "systems": [
-      {
-        "id": "dnd5e",
-        "type": "system"
-      }
-    ]
   }
 }
