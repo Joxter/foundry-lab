@@ -17,6 +17,9 @@ const NO_DIALOG = { configure: false };
 // Cunning Strike: сегментный контрол 2×2, первая ячейка — «ничего». Ключ = имя активности на предмете.
 const CUNNING = [["none", "×"], ["trip", "Trip"], ["poison", "Poison"], ["withdraw", "Withdraw"]];
 const NO_MODS = { crit: false, sneak: false, cunning: "none" };
+// Панель только для этого персонажа (по имени актёра)
+const CHARACTER = "staart";
+const isMine = actor => actor?.name?.trim().toLowerCase() === CHARACTER && actor.isOwner;
 
 class RollPanel extends ApplicationV2 {
   static DEFAULT_OPTIONS = {
@@ -36,7 +39,7 @@ class RollPanel extends ApplicationV2 {
   crits = {};            // itemId -> Crit для заклинаний (Fire Bolt)
 
   get actor() {
-    return canvas.tokens?.controlled[0]?.actor ?? game.user.character ?? null;
+    return game.actors.find(isMine) ?? null;
   }
 
   // Шкала Sneak Attack (кости) и предмет Cunning Strike, если есть у персонажа
@@ -52,7 +55,7 @@ class RollPanel extends ApplicationV2 {
 
   async _renderHTML() {
     const actor = this.actor;
-    if (!actor?.system.skills) return `<p class="empty">Select a character token</p>`;
+    if (!actor?.system.skills) return `<p class="empty">Staart not found</p>`;
     const s = actor.system;
 
     const d20 = (action, key, label) => `
@@ -131,7 +134,7 @@ class RollPanel extends ApplicationV2 {
     content.innerHTML = html;
   }
 
-  // Закрыли (крестиком или Shift+R) — при следующей загрузке не открывать
+  // Закрыли крестиком — при следующей загрузке не открывать
   _onClose(options) {
     super._onClose(options);
     game.settings.set(ID, "open", false);
@@ -253,28 +256,26 @@ class RollPanel extends ApplicationV2 {
 
 const panel = new RollPanel();
 
-// Панель открывается только у того, кто сам её открыл (Shift+R); состояние хранится в этом браузере.
-// Так модуль, включённый мастером для всего мира, ничего не показывает остальным игрокам.
+// Открыть: правая кнопка по Staart в списке актёров → Roll panel. Закрыть: крестик окна.
+// Открытое окно помнится в этом браузере и открывается снова после перезагрузки.
+// У остальных игроков (не владельцев Staart) пункта меню нет и панель не появляется.
 Hooks.once("init", () => {
   game.settings.register(ID, "open", { scope: "client", config: false, type: Boolean, default: false });
-  game.keybindings.register(ID, "toggle", {
-    name: "Toggle roll panel",
-    editable: [{ key: "KeyR", modifiers: ["Shift"] }],
-    onDown: () => {
-      if (panel.rendered) panel.close();
-      else { panel.render({ force: true }); game.settings.set(ID, "open", true); }
-      return true;
-    },
-  });
 });
 
-Hooks.once("ready", () => game.settings.get(ID, "open") && panel.render({ force: true }));
+Hooks.once("ready", () => game.settings.get(ID, "open") && panel.actor && panel.render({ force: true }));
 
-// Перерисовка при смене токена и изменении персонажа/предметов
+Hooks.on("getActorContextOptions", (app, options) => options.unshift({
+  label: "Roll panel",
+  icon: "fa-solid fa-dice-d20",
+  visible: li => isMine(game.actors.get(li.closest("[data-entry-id]").dataset.entryId)),
+  onClick: () => { panel.render({ force: true }); game.settings.set(ID, "open", true); },
+}));
+
+// Перерисовка при изменении персонажа/предметов
 const rerender = doc => {
   if (!panel.rendered) return;
   const actor = doc instanceof Actor ? doc : doc.parent;
   if (actor === panel.actor) panel.render();
 };
-Hooks.on("controlToken", () => panel.rendered && panel.render());
 for (const hook of ["updateActor", "updateItem", "createItem", "deleteItem"]) Hooks.on(hook, rerender);

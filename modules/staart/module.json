@@ -1,7 +1,7 @@
 {
   "id": "lab-staart",
   "title": "Staart roll panel (lab)",
-  "description": "Панель бросков для персонажа dnd5e: навыки, атаки, урон с Crit/Sneak Attack/Cunning Strike без диалогов. Открыть/закрыть: Shift+R.",
+  "description": "Панель бросков для персонажа dnd5e: навыки, атаки, урон с Crit/Sneak Attack/Cunning Strike без диалогов. Только для персонажа Staart: правая кнопка по нему в списке актёров → Roll panel.",
   "version": "0.1.0",
   "compatibility": {
     "minimum": "14",
